@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>THP Admin</title>
+  <meta name="theme-color" content="#FAF9F6">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Adm">
+  <link rel="icon" type="image/png" sizes="192x192" href="icons/admin-icon-192.png">
+  <link rel="apple-touch-icon" href="icons/admin-icon-192.png">
+  <link rel="manifest" href="json/admin-manifest.json">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/admin.css">
+  <script src="js/admin-theme-init.js"></script>
+  <script src="js/config.js"></script>
+</head>
+<body>
+
+<div id="admin-splash-screen" class="splash-screen" role="img" aria-label="THP Admin">
+  <div class="splash-inner">
+    <div class="splash-spinner"></div>
+  </div>
+</div>
+
+<div class="admin-layout">
+  <aside class="admin-sidebar" id="admin-sidebar">
+    <div class="admin-sidebar-brand">
+      <img src="img/logo.png" alt="THP" class="admin-logo">
+      <span>THP Admin</span>
+      <button id="admin-close-sidebar" class="icon-btn admin-close-sidebar" aria-label="Fechar menu" type="button">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+
+    <nav class="admin-nav">
+      <a href="admin.html" class="admin-nav-link active">Painel</a>
+      <a href="index.html" class="admin-nav-link">Chat</a>
+      <a href="https://landing-page-thp.vercel.app/" target="_blank" rel="noopener noreferrer" class="admin-nav-link">Landing page</a>
+    </nav>
+
+    <div id="admin-account" class="account" hidden>
+      <div class="sidebar-profile">
+        <div id="admin-profile-photo" class="sidebar-profile-photo">👤</div>
+        <div class="sidebar-profile-info">
+          <div id="admin-profile-name" class="sidebar-profile-name">Admin</div>
+          <div id="admin-profile-email" class="sidebar-profile-email"></div>
+        </div>
+      </div>
+      <div class="account-actions">
+        <button id="admin-theme-btn" class="account-settings" type="button" aria-label="Alternar tema" title="Alternar tema claro/escuro">
+          <svg id="admin-theme-icon-moon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          <svg id="admin-theme-icon-sun" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" hidden><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+        </button>
+        <button id="admin-logout-btn" class="account-logout" type="button" hidden>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          Sair
+        </button>
+      </div>
+    </div>
+  </aside>
+
+  <div id="admin-overlay" class="admin-overlay"></div>
+
+  <main class="admin-main">
+    <header id="admin-mobile-header" class="admin-mobile-header">
+      <button id="admin-open-sidebar" class="icon-btn" aria-label="Abrir menu" type="button">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+      <img src="img/logo.png" alt="THP" class="admin-logo admin-mobile-logo">
+      <span class="admin-mobile-title">THP Admin</span>
+    </header>
+
+    <div id="admin-state-login" class="admin-state" hidden>
+      <p>Você precisa entrar para ver esta página.</p>
+      <a href="login.html" class="auth-submit admin-login-link">Entrar</a>
+    </div>
+
+    <p id="admin-state-denied" class="admin-state" hidden>Acesso negado. Essa página é restrita.</p>
+
+    <p id="admin-state-error" class="admin-state" hidden>Não foi possível carregar as estatísticas. Tente recarregar a página.</p>
+
+    <div id="admin-content" class="admin-content" hidden>
+      <div class="admin-stats-grid">
+        <div class="admin-stat-card">
+          <div class="admin-stat-label">Contas cadastradas</div>
+          <div class="admin-stat-value" id="stat-accounts">—</div>
+        </div>
+        <div class="admin-stat-card">
+          <div class="admin-stat-label">Tokens consumidos (total)</div>
+          <div class="admin-stat-value" id="stat-tokens-total">—</div>
+        </div>
+        <div class="admin-stat-card">
+          <div class="admin-stat-label">Custo estimado</div>
+          <div class="admin-stat-value" id="stat-cost-total">—</div>
+          <div class="admin-stat-sub" id="stat-cost-sub"></div>
+        </div>
+      </div>
+
+      <h2 class="admin-section-title">Consumo por dia</h2>
+      <div id="admin-daily-chart" class="admin-chart"></div>
+      <p id="admin-daily-empty" class="admin-empty" hidden>Ainda não há dados de consumo registrados.</p>
+
+      <h2 class="admin-section-title admin-section-title-spaced">E-mails cadastrados</h2>
+      <input id="admin-accounts-search" class="admin-search" type="search" placeholder="Buscar por e-mail…">
+      <div class="admin-table-wrap">
+        <table class="admin-table">
+          <thead>
+            <tr><th>E-mail</th><th>Cadastrado em</th><th>Tokens</th><th></th></tr>
+          </thead>
+          <tbody id="admin-accounts-body"></tbody>
+        </table>
+      </div>
+      <p id="admin-accounts-empty" class="admin-empty" hidden>Ainda não há contas cadastradas.</p>
+      <p id="admin-accounts-no-match" class="admin-empty" hidden>Nenhum e-mail bate com essa busca.</p>
+    </div>
+  </main>
+</div>
+
+<div id="admin-modal-overlay" class="modal-overlay" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="admin-modal-title">
+    <h2 id="admin-modal-title" class="modal-title">Excluir conta?</h2>
+    <p id="admin-modal-text" class="modal-text"></p>
+    <div class="modal-actions">
+      <button id="admin-modal-cancel" class="modal-btn modal-cancel" type="button">Cancelar</button>
+      <button id="admin-modal-confirm" class="modal-btn modal-danger" type="button">Excluir</button>
+    </div>
+  </div>
+</div>
+
+<script src="js/auth.js"></script>
+<script src="js/admin.js"></script>
+</body>
+</html>

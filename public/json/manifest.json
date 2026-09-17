@@ -1,0 +1,15 @@
+{
+  "name": "THP — Inspeções e Serviços",
+  "short_name": "THP",
+  "description": "Inteligência técnica para a indústria de óleo e gás: normas, engenharia e qualidade.",
+  "start_url": "../",
+  "scope": "../",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#FAF9F6",
+  "theme_color": "#FAF9F6",
+  "icons": [
+    { "src": "../icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "../icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

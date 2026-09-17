@@ -1,0 +1,163 @@
+/* =========================================================
+   Camada de autenticação + dados (Supabase), em script clássico
+   (funciona também ao abrir o arquivo direto, via file://).
+
+   A biblioteca do Supabase só é baixada quando estiver configurado
+   (getClient), então em "modo local" nada é carregado da rede.
+
+   Expõe window.THP com:
+     - isConfigured
+     - auth.getSession / signInWithOAuth / signInWithOtp / signOut / onAuthStateChange
+     - cloudList / cloudUpsert / cloudDelete
+   ========================================================= */
+(function () {
+  var cfg = window.THP_CONFIG || {};
+  function valid(v, marker) {
+    return typeof v === "string" && v.length > 0 && v.indexOf(marker) === -1;
+  }
+  var isConfigured =
+    valid(cfg.SUPABASE_URL, "SEU-PROJETO") &&
+    valid(cfg.SUPABASE_ANON_KEY, "SUA-ANON");
+
+  var SUPABASE_CDN = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2";
+  var clientPromise = null;
+
+  function loadLib() {
+    return new Promise(function (resolve, reject) {
+      if (window.supabase && window.supabase.createClient) return resolve();
+      var s = document.createElement("script");
+      s.src = SUPABASE_CDN;
+      s.onload = resolve;
+      s.onerror = function () {
+        reject(new Error("Não foi possível carregar a biblioteca do Supabase."));
+      };
+      document.head.appendChild(s);
+    });
+  }
+
+  function getClient() {
+    if (!clientPromise) {
+      clientPromise = loadLib().then(function () {
+        return window.supabase.createClient(cfg.SUPABASE_URL, cfg.SUPABASE_ANON_KEY, {
+          auth: {
+            // localStorage mantém o usuário logado entre aberturas do app.
+            // Com sessionStorage a sessão era apagada ao fechar, obrigando
+            // a entrar de novo toda vez — inviável para um app instalado.
+            // O risco de roubo do token por XSS é contido pela CSP e pelo
+            // DOMPurify; em dispositivo compartilhado, use "Sair".
+            storage: localStorage,
+            persistSession: true,
+            autoRefreshToken: true,
+            detectSessionInUrl: true,
+          },
+        });
+      });
+    }
+    return clientPromise;
+  }
+
+  function fromRow(row) {
+    return {
+      id: row.id,
+      title: row.title || "",
+      messages: Array.isArray(row.messages) ? row.messages : [],
+      createdAt: row.created_at ? Date.parse(row.created_at) : Date.now(),
+      updatedAt: row.updated_at ? Date.parse(row.updated_at) : Date.now(),
+    };
+  }
+
+  window.THP = {
+    isConfigured: isConfigured,
+
+    auth: {
+      getSession: function () {
+        return getClient().then(function (c) { return c.auth.getSession(); });
+      },
+      signInWithOAuth: function (opts) {
+        return getClient().then(function (c) { return c.auth.signInWithOAuth(opts); });
+      },
+      signInWithOtp: function (opts) {
+        return getClient().then(function (c) { return c.auth.signInWithOtp(opts); });
+      },
+      signOut: function () {
+        return getClient().then(function (c) { return c.auth.signOut(); });
+      },
+      onAuthStateChange: function (cb) {
+        return getClient().then(function (c) { return c.auth.onAuthStateChange(cb); });
+      },
+    },
+
+    cloudList: function () {
+      return getClient()
+        .then(function (c) {
+          return c.from("conversations").select("*").order("updated_at", { ascending: false });
+        })
+        .then(function (res) {
+          if (res.error) throw res.error;
+          return (res.data || []).map(fromRow);
+        });
+    },
+
+    cloudUpsert: function (chat, userId) {
+      return getClient()
+        .then(function (c) {
+          return c.from("conversations").upsert({
+            id: chat.id,
+            user_id: userId,
+            title: chat.title || "",
+            messages: chat.messages,
+            updated_at: new Date(chat.updatedAt || Date.now()).toISOString(),
+          });
+        })
+        .then(function (res) {
+          if (res.error) throw res.error;
+        });
+    },
+
+    cloudDelete: function (id) {
+      return getClient()
+        .then(function (c) {
+          // Hard delete: remove conversa completamente.
+          // .select() retorna as linhas apagadas para confirmar que apagou.
+          return c.from("conversations").delete().eq("id", id).select();
+        })
+        .then(function (res) {
+          if (res.error) throw res.error;
+          // Se nenhuma linha foi apagada, a RLS provavelmente bloqueou.
+          if (!res.data || res.data.length === 0) {
+            throw new Error(
+              "Nada foi apagado (políticas do banco bloquearam). Rode o SQL de correção no Supabase."
+            );
+          }
+          return res.data;
+        });
+    },
+
+    cloudLoadProfile: function (userId) {
+      return getClient()
+        .then(function (c) {
+          return c.from("user_profiles").select("*").eq("user_id", userId).single();
+        })
+        .then(function (res) {
+          if (res.error && res.status !== 406) throw res.error; // 406 = não encontrado
+          return res.data || { name: "", company: "", photo: "" };
+        });
+    },
+
+    cloudSaveProfile: function (userId, profile) {
+      return getClient()
+        .then(function (c) {
+          return c.from("user_profiles").upsert({
+            user_id: userId,
+            name: profile.name || "",
+            company: profile.company || "",
+            photo: profile.photo || "",
+            updated_at: new Date().toISOString(),
+          }, { onConflict: "user_id" });
+        })
+        .then(function (res) {
+          if (res.error) throw res.error;
+        });
+    },
+  };
+})();
